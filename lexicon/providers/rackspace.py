@@ -73,19 +73,37 @@ class Provider(BaseProvider):
             self._auth_token = auth_response['access']['token']['id']
             self._auth_account = auth_response['access']['token']['tenant']['id']
 
-        payload = self._get('/domains', {
-            'name': self.domain
-        })
+        if  self.domain:
+            payload = self._get('/domains', {
+                'name': self.domain
+            })
 
-        if not payload['domains']:
-            raise Exception('No domain found')
-        if len(payload['domains']) > 1:
-            raise Exception('Too many domains found. This should not happen')
+            if not payload['domains']:
+                raise Exception('No domain found')
+            if len(payload['domains']) > 1:
+                raise Exception('Too many domains found. This should not happen')
 
-        self.domain_id = payload['domains'][0]['id']
+            self.domain_id = payload['domains'][0]['id']
+
+    # List all records. Return an empty list if no records found
+    # type, name and content are used to filter records.
+    # If possible filter during the query, otherwise filter after response is received.
+    def _list_domains(self):
+        params = {'per_page': 100}
+
+        payload = self._get('/domains', params)
+
+        domains = list(payload['domains'])
+
+        domains = [{
+            'id': domain['id'],
+            'name': domain['name']
+        } for domain in domains]
+
+        LOGGER.debug('list_domains: %s', domains)
+        return domains
 
     # Create record. If record already exists with the same content, do nothing'
-
     def _create_record(self, rtype, name, content):
         data = {'records': [
             {'type': rtype, 'name': self._full_name(name), 'data': content}]}
@@ -125,11 +143,11 @@ class Provider(BaseProvider):
             records = [
                 record for record in records if record['data'] == content]
         records = [{
-            'type': record['type'],
+            'id': record['id'],
             'name': record['name'],
             'ttl': record['ttl'],
+            'type': record['type'],
             'content': record['data'],
-            'id': record['id']
         } for record in records]
 
         LOGGER.debug('list_records: %s', records)

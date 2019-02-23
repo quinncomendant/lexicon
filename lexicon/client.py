@@ -30,23 +30,24 @@ class Client(object):  # pylint: disable=useless-object-inheritance,too-few-publ
 
         runtime_config = {}
 
-        # Process domain, strip subdomain
-        domain_parts = tldextract.extract(
-            self.config.resolve('lexicon:domain'))
-        runtime_config['domain'] = '{0}.{1}'.format(
-            domain_parts.domain, domain_parts.suffix)
+        if self.config.resolve('lexicon:domain'):
+            # Process domain, strip subdomain
+            domain_parts = tldextract.extract(
+                self.config.resolve('lexicon:domain'))
+            runtime_config['domain'] = '{0}.{1}'.format(
+                domain_parts.domain, domain_parts.suffix)
 
-        if self.config.resolve('lexicon:delegated'):
-            # handle delegated domain
-            delegated = self.config.resolve('lexicon:delegated').rstrip('.')
-            if delegated != runtime_config.get('domain'):
-                # convert to relative name
-                if delegated.endswith(runtime_config.get('domain')):
-                    delegated = delegated[:-len(runtime_config.get('domain'))]
-                    delegated = delegated.rstrip('.')
-                # update domain
-                runtime_config['domain'] = '{0}.{1}'.format(
-                    delegated, runtime_config.get('domain'))
+            if self.config.resolve('lexicon:delegated'):
+                # handle delegated domain
+                delegated = self.config.resolve('lexicon:delegated').rstrip('.')
+                if delegated != runtime_config.get('domain'):
+                    # convert to relative name
+                    if delegated.endswith(runtime_config.get('domain')):
+                        delegated = delegated[:-len(runtime_config.get('domain'))]
+                        delegated = delegated.rstrip('.')
+                    # update domain
+                    runtime_config['domain'] = '{0}.{1}'.format(
+                        delegated, runtime_config.get('domain'))
 
         self.action = self.config.resolve('lexicon:action')
         self.provider_name = (self.config.resolve('lexicon:provider_name')
@@ -71,7 +72,10 @@ class Client(object):  # pylint: disable=useless-object-inheritance,too-few-publ
             return self.provider.create_record(record_type, name, content)
 
         if self.action == 'list':
-            return self.provider.list_records(record_type, name, content)
+            if self.config.resolve('lexicon:domain'):
+                return self.provider.list_records(record_type, name, content)
+            else:
+                return self.provider.list_domains()
 
         if self.action == 'update':
             return self.provider.update_record(identifier, record_type, name, content)
@@ -86,5 +90,3 @@ class Client(object):  # pylint: disable=useless-object-inheritance,too-few-publ
             raise AttributeError('provider_name')
         if not self.config.resolve('lexicon:action'):
             raise AttributeError('action')
-        if not self.config.resolve('lexicon:domain'):
-            raise AttributeError('domain')

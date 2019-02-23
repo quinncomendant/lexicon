@@ -21,17 +21,13 @@ def generate_list_table_result(lexicon_logger, output=None, without_header=None)
                              'be printed with --quiet parameter not enabled.')
         return None
 
-    array = [[
-        row.get('id', ''),
-        row.get('type', ''),
-        row.get('name', ''),
-        row.get('content', ''),
-        row.get('ttl', '')] for row in output]
+    keys = list(output[0].keys())
+    array = [[row.get(key, '') for key in keys] for row in output]
 
     # Insert header (insert before calculating the max width of each column
     # to take headers size into account)
     if not without_header:
-        headers = ['ID', 'TYPE', 'NAME', 'CONTENT', 'TTL']
+        headers = list(map(lambda h: str.upper(h), keys))
         array.insert(0, headers)
 
     column_widths = [0, 0, 0, 0, 0]

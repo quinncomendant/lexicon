@@ -68,6 +68,13 @@ class Provider(object):  # pylint: disable=useless-object-inheritance
         """
         return self._authenticate()
 
+
+    def list_domains(self):
+        """
+        List all domains. Return an empty list if no domains found.
+        """
+        return self._list_domains()
+
     def create_record(self, rtype=None, name=None, content=None, **kwargs):
         """
         Create record. If record already exists with the same content, do nothing.
@@ -119,6 +126,9 @@ class Provider(object):  # pylint: disable=useless-object-inheritance
 
     # Internal abstract implementations
     def _authenticate(self):
+        raise NotImplementedError("Providers must implement this!")
+
+    def _list_domains(self):
         raise NotImplementedError("Providers must implement this!")
 
     def _create_record(self, rtype, name, content):

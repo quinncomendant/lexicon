@@ -12,8 +12,7 @@ def generate_base_provider_parser():
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument('action', help='specify the action to take', default='list',
                         choices=['create', 'list', 'update', 'delete'])
-    parser.add_argument(
-        'domain', help='specify the domain, supports subdomains as well')
+    parser.add_argument('domain', help='specify the domain, supports subdomains as well', default=None, nargs='?')
     parser.add_argument('type', help='specify the entry type', default=None, type=str.upper, nargs='?',
                         choices=['A', 'AAAA', 'CNAME', 'MX', 'NS', 'SOA', 'TXT', 'SRV', 'LOC'])
 
