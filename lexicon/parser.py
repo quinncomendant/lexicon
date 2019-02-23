@@ -9,27 +9,47 @@ from lexicon import providers as providers_package
 
 def generate_base_provider_parser():
     """Function that generates the base provider to be used by all dns providers."""
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument('action', help='specify the action to take', default='list',
-                        choices=['create', 'list', 'update', 'delete'])
-    parser.add_argument('domain', help='specify the domain, supports subdomains as well', default=None, nargs='?')
-    parser.add_argument('type', help='specify the entry type', default=None, type=str.upper, nargs='?',
-                        choices=['A', 'AAAA', 'CNAME', 'MX', 'NS', 'SOA', 'TXT', 'SRV', 'LOC'])
 
-    parser.add_argument('--name', help='specify the record name')
-    parser.add_argument('--content', help='specify the record content')
-    parser.add_argument('--ttl', type=int,
+    # parser.add_argument('action', help='specify the action to take', default='list', choices=['create', 'list', 'update', 'delete'])
+
+    global_provider_parser = argparse.ArgumentParser(add_help=False)
+    global_provider_parser.add_argument('--name', help='specify the record name')
+    global_provider_parser.add_argument('--content', help='specify the record content')
+    global_provider_parser.add_argument('--ttl', type=int,
                         help='specify the record time-to-live')
-    parser.add_argument('--priority', help='specify the record priority')
-    parser.add_argument(
+    global_provider_parser.add_argument('--priority', help='specify the record priority')
+    global_provider_parser.add_argument(
         '--identifier', help='specify the record for update or delete actions')
-    parser.add_argument('--log_level', help='specify the log level', default='ERROR',
+    global_provider_parser.add_argument('--log_level', help='specify the log level', default='ERROR',
                         choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET'])
-    parser.add_argument('--output',
+    global_provider_parser.add_argument('--output',
                         help=('specify the type of output: by default a formatted table (TABLE), '
                               'a formatted table without header (TABLE-NO-HEADER), '
                               'a JSON string (JSON) or no output (QUIET)'),
                         default='TABLE', choices=['TABLE', 'TABLE-NO-HEADER', 'JSON', 'QUIET'])
+
+    # Provider parser.
+    parser = argparse.ArgumentParser(add_help=False)
+
+    # Create a subparser for the action arguments so we can specify different requirements for each.
+    action_subparsers = parser.add_subparsers(dest='action')
+
+    create_parser = action_subparsers.add_parser('create', help='Create a new domain or domain record', parents=[global_provider_parser])
+    create_parser.add_argument('domain', help='specify the domain, supports subdomains as well')
+    create_parser.add_argument('type', help='specify the entry type', default=None, type=str.upper, choices=['A', 'AAAA', 'CNAME', 'MX', 'NS', 'SOA', 'TXT', 'SRV', 'LOC'])
+
+    list_parser = action_subparsers.add_parser('list', help='List all domains or the records in a specified domain', parents=[global_provider_parser])
+    list_parser.add_argument('domain', help='specify the domain, supports subdomains as well', default=None, nargs='?')
+    list_parser.add_argument('type', help='specify the entry type', default=None, type=str.upper, nargs='?', choices=['A', 'AAAA', 'CNAME', 'MX', 'NS', 'SOA', 'TXT', 'SRV', 'LOC'])
+
+    update_parser = action_subparsers.add_parser('update', help='Update a domain record', parents=[global_provider_parser])
+    update_parser.add_argument('domain', help='specify the domain, supports subdomains as well')
+    update_parser.add_argument('type', help='specify the entry type', default=None, type=str.upper, choices=['A', 'AAAA', 'CNAME', 'MX', 'NS', 'SOA', 'TXT', 'SRV', 'LOC'])
+
+    delete_parser = action_subparsers.add_parser('delete', help='Delete a domain or domain record', parents=[global_provider_parser])
+    delete_parser.add_argument('domain', help='specify the domain, supports subdomains as well')
+    delete_parser.add_argument('type', help='specify the entry type', default=None, type=str.upper, choices=['A', 'AAAA', 'CNAME', 'MX', 'NS', 'SOA', 'TXT', 'SRV', 'LOC'])
+
     return parser
 
 
