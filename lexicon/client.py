@@ -88,5 +88,3 @@ class Client(object):  # pylint: disable=useless-object-inheritance,too-few-publ
             raise AttributeError('action')
         if not self.config.resolve('lexicon:domain'):
             raise AttributeError('domain')
-        if not self.config.resolve('lexicon:type'):
-            raise AttributeError('type')
