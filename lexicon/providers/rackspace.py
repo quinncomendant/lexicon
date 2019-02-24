@@ -73,7 +73,7 @@ class Provider(BaseProvider):
             self._auth_token = auth_response['access']['token']['id']
             self._auth_account = auth_response['access']['token']['tenant']['id']
 
-        if  self.domain:
+        if self.domain and self._get_lexicon_option('action') != 'create_domain':
             payload = self._get('/domains', {
                 'name': self.domain
             })
@@ -84,6 +84,41 @@ class Provider(BaseProvider):
                 raise Exception('Too many domains found. This should not happen')
 
             self.domain_id = payload['domains'][0]['id']
+
+    # Create domain. If domain already exists, do nothing'
+    def _create_domain(self, domain, email_address):
+        data = {'domains': [{'name': domain, 'emailAddress': email_address}]}
+
+        if self._get_lexicon_option('ttl'):
+            data['domains'][0]['ttl'] = self._get_lexicon_option('ttl')
+
+        if self._get_lexicon_option('comment'):
+            data['domains'][0]['comment'] = self._get_lexicon_option('comment')
+
+        try:
+            payload = self._post_and_wait('/domains', data)
+        except Exception as error:
+            if str(error).endswith(' already exists'):
+                LOGGER.warning('Domain %s already exists', domain)
+                raise Exception('Domain {0} already exists'.format(domain))
+            raise error
+
+        success = len(payload['domains']) > 0
+        LOGGER.debug('create_domain: %s', success)
+        return success
+
+    # Delete domain. If domain doesn't exist, do nothing'
+    def _delete_domain(self, domain):
+        params = {'id': self.domain_id, 'deleteSubdomains': 'true'}
+
+        try:
+            self._delete_and_wait('/domains', None, params)
+        except Exception as error:
+            raise error
+
+        success = True
+        LOGGER.debug('delete_domain: %s', success)
+        return success
 
     # List all records. Return an empty list if no records found
     # type, name and content are used to filter records.
@@ -109,7 +144,8 @@ class Provider(BaseProvider):
             {'type': rtype, 'name': self._full_name(name), 'data': content}]}
         if self._get_lexicon_option('ttl'):
             data['records'][0]['ttl'] = self._get_lexicon_option('ttl')
-
+        if self._get_lexicon_option('priority'):
+            data['records'][0]['priority'] = self._get_lexicon_option('priority')
         try:
             payload = self._post_and_wait(
                 '/domains/{0}/records'.format(self.domain_id), data)
@@ -147,7 +183,7 @@ class Provider(BaseProvider):
             'name': record['name'],
             'ttl': record['ttl'],
             'type': record['type'],
-            'content': record['data'],
+            'content': '{0} {1}'.format(record['priority'], record['data']) if 'priority' in record else record['data'],
         } for record in records]
 
         LOGGER.debug('list_records: %s', records)

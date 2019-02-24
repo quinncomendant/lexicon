@@ -67,6 +67,13 @@ class Client(object):  # pylint: disable=useless-object-inheritance,too-few-publ
         record_type = self.config.resolve('lexicon:type')
         name = self.config.resolve('lexicon:name')
         content = self.config.resolve('lexicon:content')
+        email_address = self.config.resolve('lexicon:email_address')
+
+        if self.action == 'create_domain':
+            return self.provider.create_domain(self.config.resolve('lexicon:domain'), email_address)
+
+        if self.action == 'delete_domain':
+            return self.provider.delete_domain(name)
 
         if self.action == 'create':
             return self.provider.create_record(record_type, name, content)

@@ -68,6 +68,17 @@ class Provider(object):  # pylint: disable=useless-object-inheritance
         """
         return self._authenticate()
 
+    def create_domain(self, name=None, email_address=None):
+        """
+        Create domain. If domain already exists, do nothing.
+        """
+        return self._create_domain(name, email_address)
+
+    def delete_domain(self, name=None):
+        """
+        Delete domain. If domain doesn't exist, do nothing.
+        """
+        return self._delete_domain(name)
 
     def list_domains(self):
         """
@@ -126,6 +137,12 @@ class Provider(object):  # pylint: disable=useless-object-inheritance
 
     # Internal abstract implementations
     def _authenticate(self):
+        raise NotImplementedError("Providers must implement this!")
+
+    def _create_domain(self, name, email_address):
+        raise NotImplementedError("Providers must implement this!")
+
+    def _delete_domain(self, name):
         raise NotImplementedError("Providers must implement this!")
 
     def _list_domains(self):
