@@ -175,16 +175,22 @@ class Provider(BaseProvider):
             '/domains/{0}/records'.format(self.domain_id), params)
 
         records = list(payload['records'])
-        if content:
-            records = [
-                record for record in records if record['data'] == content]
+
+        # Select only the values we want, in the order want. Keys names are meant to be human-readable.
         records = [{
             'id': record['id'],
             'name': record['name'],
             'ttl': record['ttl'],
             'type': record['type'],
+            # Include the priority value in the content if it is available.
             'content': '{0} {1}'.format(record['priority'], record['data']) if 'priority' in record else record['data'],
         } for record in records]
+
+        # Reduce the list to only matching records.
+        if content:
+            records = [
+                record for record in records if record['content'] == content
+            ]
 
         LOGGER.debug('list_records: %s', records)
         return records
