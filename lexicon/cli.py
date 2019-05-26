@@ -10,6 +10,7 @@ from lexicon.client import Client
 from lexicon.config import ConfigResolver
 from lexicon.parser import generate_cli_main_parser
 
+sys.tracebacklimit = 0
 
 logger = logging.getLogger(__name__)  # pylint: disable=C0103
 
