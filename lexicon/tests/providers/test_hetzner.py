@@ -1,15 +1,25 @@
 """Integration tests for Hetzner"""
 from unittest import TestCase
 import os
+
 import mock
 import pytest
-from bs4 import BeautifulSoup
-import dns.resolver
-from lexicon.providers.hetzner import Provider
+
+# Optional dependency handling
+try:
+    from bs4 import BeautifulSoup
+except ImportError:
+    pass
+
 from lexicon.tests.providers.integration_tests import IntegrationTests
 
 
 def _no_dns_lookup():
+    try:
+        import dns.resolver  # pylint: disable=import-outside-toplevel
+    except ImportError:
+        return False
+
     _domains = ['rimek.info', 'bettilaila.com']
     _resolver = dns.resolver.Resolver()
     _resolver.lifetime = 1
@@ -41,8 +51,9 @@ class HetznerIntegrationTests(IntegrationTests):
     @pytest.mark.ignore_dns_cname_mock
     def _test_get_dns_cname(self):
         """Ensure that zone for name can be resolved through dns.resolver call."""
-        _domain, _nameservers, _cname = Provider._get_dns_cname(('_acme-challenge.fqdn.{}.'  # pylint: disable=protected-access
-                                                                 .format(self.domain)), False)
+        _domain, _nameservers, _cname = self.provider_module.Provider._get_dns_cname(  # pylint: disable=protected-access
+            ('_acme-challenge.fqdn.{}.'.format(self.domain)), False)
+
         assert _domain == self.domain
         assert _nameservers
         assert not _cname
@@ -50,7 +61,6 @@ class HetznerIntegrationTests(IntegrationTests):
 
 class HetznerRobotProviderTests(TestCase, HetznerIntegrationTests):
     """TestCase for Hetzner Robot"""
-    Provider = Provider
     provider_name = 'hetzner'
     provider_variant = 'Robot'
     domain = 'rimek.info'
@@ -84,7 +94,6 @@ class HetznerRobotProviderTests(TestCase, HetznerIntegrationTests):
 
 class HetznerKonsoleHProviderTests(TestCase, HetznerIntegrationTests):
     """TestCase for KonsoleH"""
-    Provider = Provider
     provider_name = 'hetzner'
     provider_variant = 'KonsoleH'
     domain = 'bettilaila.com'
