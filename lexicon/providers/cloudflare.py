@@ -18,6 +18,8 @@ def provider_parser(subparser):
         "--auth-username", help="specify email address for authentication")
     subparser.add_argument(
         "--auth-token", help="specify token for authentication")
+    subparser.add_argument(
+        "--account-id", help="account identifier tag (get from the URL, e.g.: https://dash.cloudflare.com/XXXXXXX/example.com)")
 
 
 class Provider(BaseProvider):
@@ -41,8 +43,25 @@ class Provider(BaseProvider):
 
         self.domain_id = payload['result'][0]['id']
 
-    # Create record. If record already exists with the same content, do nothing'
+    # List all records. Return an empty list if no records found
+    # type, name and content are used to filter records.
+    # If possible filter during the query, otherwise filter after response is received.
+    def _list_domains(self):
+        payload = self._get('/zones', {
+            'status': 'active',
+            'per_page': 50,
+            'account.id': self._get_provider_option('account_id')
+        })
+        domains = list(payload['result'])
+        domains = [{
+            'id': domain['id'],
+            'name': domain['name']
+        } for domain in domains]
 
+        LOGGER.debug('list_domains: %s', domains)
+        return domains
+
+    # Create record. If record already exists with the same content, do nothing'
     def _create_record(self, rtype, name, content):
         data = {'type': rtype, 'name': self._full_name(
             name), 'content': content}
