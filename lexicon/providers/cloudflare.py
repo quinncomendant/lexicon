@@ -80,11 +80,12 @@ class Provider(BaseProvider):
         records = []
         for record in payload['result']:
             processed_record = {
-                'type': record['type'],
+                'id': record['id'],
                 'name': record['name'],
                 'ttl': record['ttl'],
-                'content': record['content'],
-                'id': record['id']
+                'type': record['type'],
+                # Include the priority value in the content if it is available.
+                'content': '{0} {1}'.format(record['priority'], record['content']) if 'priority' in record else record['content']
             }
             records.append(processed_record)
 
@@ -138,6 +139,9 @@ class Provider(BaseProvider):
         response = requests.request(action, self.api_endpoint + url, params=query_params,
                                     data=json.dumps(data),
                                     headers={
+                                        # API docs says "Authorization: Bearer" is required: https://api.cloudflare.com/#getting-started-requests
+                                        'Authorization': 'Bearer {0}'.format(self._get_provider_option('auth_token')),
+                                        # But the List Zones documentation only shows X-Auth-Email and X-Auth-Key: https://api.cloudflare.com/#zone-list-zones
                                         'X-Auth-Email': self._get_provider_option('auth_username'),
                                         'X-Auth-Key': self._get_provider_option('auth_token'),
                                         'Content-Type': 'application/json'
