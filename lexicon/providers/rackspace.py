@@ -207,12 +207,6 @@ class Provider(BaseProvider):
         if self._get_lexicon_option('ttl'):
             data['ttl'] = self._get_lexicon_option('ttl')
 
-        if identifier is None:
-            records = self._list_records(rtype, name)
-            if not records:
-                raise Exception('Unable to find record to modify: ' + name)
-            identifier = records[0]['id']
-
         self._put_and_wait(
             '/domains/{0}/records/{1}'.format(self.domain_id, identifier), data)
 

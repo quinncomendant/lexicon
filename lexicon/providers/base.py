@@ -120,6 +120,13 @@ class Provider(object):  # pylint: disable=useless-object-inheritance
                           DeprecationWarning)
             rtype = kwargs.get('type')
 
+        if identifier is None:
+            # If the identifier is not provided, get the identifier matching the given name.
+            records = self._list_records(rtype, name)
+            if not records:
+                raise Exception('Unable to find record to modify: ' + name)
+            identifier = records[0]['id']
+
         return self._update_record(identifier, rtype=rtype, name=name, content=content)
 
     def delete_record(self, identifier=None, rtype=None, name=None, content=None, **kwargs):
